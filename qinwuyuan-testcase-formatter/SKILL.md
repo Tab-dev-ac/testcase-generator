@@ -111,6 +111,25 @@ User requests:
 - 预期结果: 显示所有订阅配置记录
 ```
 
+**转换后（去除优先级、测试步骤编号、预期结果标题）**：
+```markdown
+### 用例名：列表页展示所有记录
+
+- 操作步骤1：进入订阅管理页面
+
+- 操作步骤2：查看页面展示的列表
+
+- 验证：显示所有订阅配置记录
+```
+
+**注意**：
+- ❌ 去除：优先级 (P0/P1/P2)
+- ❌ 去除：测试用例编号 (TC-F01-001)
+- ❌ 去除："- 测试步骤:" 标题行
+- ❌ 去除："- 预期结果:" 标题行（直接保留验证内容）
+- ✅ 保留：操作步骤内容
+- ✅ 保留：验证内容
+
 ### Direct Description
 
 Plain text descriptions of test cases that can be parsed into the structured format.
@@ -142,6 +161,22 @@ For each testcase, extract:
 - **Steps**: Operation steps (有序)
 - **Validations**: Validation points (可穿插或汇总)
 
+**重要：只保留模板中存在的字段**
+
+根据 `/Users/tablee/Downloads/秦务员用例格式模板.md`，最终输出只包含以下字段：
+- ✅ 项目名 (`# 项目名：XXX`)
+- ✅ 模块名 (`## 模块名：XXX`)
+- ✅ 用例名 (`### 用例名：XXX`)
+- ✅ 操作步骤 (`- 操作步骤N：XXX`)
+- ✅ 验证点 (`- 验证：XXX`)
+
+**以下字段必须去除**：
+- ❌ 优先级 (P0/P1/P2)
+- ❌ 前置条件 (转换为步骤或去除)
+- ❌ 状态 (待执行/通过/失败)
+- ❌ 测试用例编号 (TC-XXX)
+- ❌ 其他元数据标签
+
 ### Step Numbering
 
 ```javascript
@@ -155,6 +190,47 @@ for (step of testcase.steps) {
   stepNumber++;
 }
 ```
+
+### 前置条件处理规则
+
+**原则**：前置条件应尽可能转化为操作步骤，如果信息不足则去除。
+
+**情况1：可以转化为操作步骤**
+当前置条件信息完整、可执行时，将其转换为第一个操作步骤：
+```
+输入：
+- 前置条件: 安全管理员登录系统
+
+转换后：
+- 操作步骤1：安全管理员登录系统
+```
+
+**情况2：作为前置步骤保留**
+当前置条件描述了多个准备工作时：
+```
+输入：
+- 前置条件: 已登录系统，拥有订阅管理权限
+
+转换后：
+- 操作步骤1：登录系统
+- 操作步骤2：确认拥有订阅管理权限
+```
+
+**情况3：信息不足，直接去除**
+当前置条件过于抽象或无法直接执行时：
+```
+输入：
+- 前置条件: 系统正常运行
+- 前置条件: 数据已准备好
+
+转换后：直接去除，不生成任何步骤
+```
+
+**处理逻辑**：
+1. 检查前置条件是否包含可执行的动作
+2. 如果包含动作动词（登录、进入、点击等），转换为操作步骤
+3. 如果只是状态描述（正常、准备就绪等），直接去除
+4. 不生成单独的"- 前置条件："行
 
 ## Output Generation
 
@@ -235,14 +311,17 @@ PRD → testcase-generator-from-prd → XMind Format → qinwuyuan-testcase-form
 
 ### Mapping Table
 
-| testcase-generator-from-prd | qinwuyuan-testcase-formatter |
-|----------------------------|------------------------------|
-| Root node (# 测试用例) | Project name |
-| Level 2 nodes (## 模块) | Module name |
-| Level 4 nodes (#### TC-XXX) | Testcase name |
-| - 测试步骤: 1. ... | - 操作步骤1：... |
-| - 预期结果: ... | - 验证：... |
-| - 优先级: P0/P1/P2 | (Optional, can be noted in comments) |
+| testcase-generator-from-prd | qinwuyuan-testcase-formatter | 说明 |
+|----------------------------|------------------------------|------|
+| Root node (# 测试用例) | Project name | 项目名 |
+| Level 2 nodes (## 模块) | Module name | 模块名 |
+| Level 4 nodes (#### TC-XXX) | Testcase name | 用例名（去除编号） |
+| - 测试步骤: 1. ... | - 操作步骤1：... | 步骤内容 |
+| - 预期结果: ... | - 验证：... | 验证内容 |
+| - 优先级: P0/P1/P2 | ❌ **去除** | 不在模板中 |
+| - 前置条件: ... | 操作步骤1 或 ❌ **去除** | 转换为步骤或去除 |
+| - 状态: 待执行 | ❌ **去除** | 不在模板中 |
+| TC-XXX 编号 | ❌ **去除** | 不在模板中 |
 
 ## Common Use Cases
 
@@ -277,14 +356,26 @@ write testcases-qinwuyuan.md
 
 ### Format Checklist
 
-- [x] Project name format: `# 项目名：XXX`
-- [x] Module name format: `## 模块名：XXX`
-- [x] Testcase name format: `### 用例名：XXX`
-- [x] Step format: `- 操作步骤N：XXX`
-- [x] Validation format: `- 验证：XXX`
-- [x] Chinese colon `：` used consistently
-- [x] Empty line between modules (optional but recommended)
-- [x] Empty line between testcases (optional but recommended)
+**必须包含**：
+- [x] 项目名格式: `# 项目名：XXX`
+- [x] 模块名格式: `## 模块名：XXX`
+- [x] 用例名格式: `### 用例名：XXX`
+- [x] 操作步骤格式: `- 操作步骤N：XXX`
+- [x] 验证点格式: `- 验证：XXX`
+- [x] 使用中文冒号 `：`
+
+**必须去除**：
+- [x] ❌ 优先级 (P0/P1/P2)
+- [x] ❌ 前置条件 (已转换为步骤或去除)
+- [x] ❌ 状态 (待执行/通过/失败)
+- [x] ❌ 测试用例编号 (TC-F01-001等)
+- [x] ❌ 其他元数据标签
+
+**格式规范**：
+- [x] 步骤编号连续（同一用例内从1开始）
+- [x] 验证点紧跟对应步骤或汇总在最后
+- [x] 模块之间可选空行分隔
+- [x] 用例之间可选空行分隔
 
 ### Common Mistakes to Avoid
 
